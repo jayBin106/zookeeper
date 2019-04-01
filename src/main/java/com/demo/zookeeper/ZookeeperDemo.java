@@ -6,7 +6,10 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.api.transaction.CuratorTransactionResult;
 import org.apache.curator.framework.recipes.cache.*;
-import org.apache.curator.framework.recipes.leader.*;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.apache.curator.framework.recipes.leader.LeaderLatchListener;
+import org.apache.curator.framework.recipes.leader.LeaderSelector;
+import org.apache.curator.framework.recipes.leader.LeaderSelectorListener;
 import org.apache.curator.framework.recipes.locks.*;
 import org.apache.curator.framework.recipes.shared.SharedCount;
 import org.apache.curator.framework.recipes.shared.SharedCountListener;
@@ -18,14 +21,12 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.data.Stat;
 import org.junit.Test;
 
-import java.lang.annotation.Repeatable;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * ZookeeperDemo
@@ -34,12 +35,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * 2019/3/31 9:44
  */
 public class ZookeeperDemo {
-    private final static String zookeeperAddress = "192.168.1.232:2181";
-
-    private final static String lock = "/lock/distributed_lock";
-    private final static String leader = "/zktest/leader";
-    private final static String LeaderLatch = "/zktest/LeaderLatch";
-
+    public final static String zookeeperAddress = "192.168.1.232:2181";
     byte[] bytes = {1, 2, 3};
 
     CuratorFramework curatorFramework = null;
@@ -131,7 +127,8 @@ public class ZookeeperDemo {
     @Test
     public void TransationTest() throws Exception {
         Collection<CuratorTransactionResult> commit =
-                curatorFramework.inTransaction()
+                curatorFramework
+                        .inTransaction()
                         .check()
                         .forPath("/two")
                         .and()
@@ -168,327 +165,6 @@ public class ZookeeperDemo {
         System.out.println(path);
         System.in.read();
     }
-
-    /**
-     * Path Cache
-     * Path Cache用来监控一个ZNode的子节点. 当一个子节点增加， 更新，删除时， Path Cache会改变它的状态，
-     * 会包含最新的子节点， 子节点的数据和状态，而状态的更变将通过PathChildrenCacheListener通知。
-     * <p>
-     * <p>
-     * 只能监听子节点信息，不能监听子节点下的节点的更新变化！！！！！！！
-     */
-
-    @Test
-    public void pathCache() throws Exception {
-        String PATHCACHE = "/cache/pathCache";
-
-        //创建pathcache true 表示缓存节点信息，如果为false说，even.getData将为null
-        PathChildrenCache cache = new PathChildrenCache(curatorFramework, PATHCACHE, true);
-        cache.start();
-        //创建监听
-        PathChildrenCacheListener pathChildrenCacheListener = (client2, event) -> {
-            System.out.println("事件类型：" + event.getType());
-            if (event.getData() != null) {
-                System.out.println("节点路径：" + event.getData().getPath() + "----节点数据：" + new String(event.getData().getData()));
-            }
-        };
-        //开始监听
-        cache.getListenable().addListener(pathChildrenCacheListener);
-
-        //创建节点
-        String forPath = curatorFramework
-                .create()
-                .creatingParentContainersIfNeeded()
-                .withMode(CreateMode.PERSISTENT)
-                .forPath(PATHCACHE + "/c", "12".getBytes());
-        System.out.println("创建节点--" + forPath);
-//        //创建节点
-        String forPath2 = curatorFramework
-                .create()
-                .creatingParentContainersIfNeeded()
-                .withMode(CreateMode.PERSISTENT)
-                .forPath(PATHCACHE + "/c/a", "12".getBytes());
-        System.out.println("创建节点--" + forPath2);
-
-        //更新节点
-        curatorFramework
-                .setData()
-                .forPath(PATHCACHE + "/c", "123".getBytes());
-        //更新节点
-        curatorFramework
-                .setData()
-                .forPath(PATHCACHE + "/c/a", "123".getBytes());
-
-        //删除节点
-//        curatorFramework
-//                .delete()
-//                .deletingChildrenIfNeeded()
-//                .forPath(PATHCACHE);
-        //阻塞。等待输入
-        System.in.read();
-    }
-
-
-    /**
-     * node cache  只是监听某一个特定的节点变化
-     */
-    @Test
-    public void nodeCache() throws Exception {
-        String nodeCacheStr = "/cache/nodeCache";
-
-        //创建nodecache
-//        String s = curatorFramework
-//                .create()
-//                .creatingParentContainersIfNeeded()
-//                .withMode(CreateMode.PERSISTENT)
-//                .forPath(nodeCacheStr, "1".getBytes());
-//        System.out.println("1111111创建节点" + s);
-
-        NodeCache nodeCache = new NodeCache(curatorFramework, nodeCacheStr);
-        NodeCacheListener nodeCacheListener = () -> {
-            ChildData currentData = nodeCache.getCurrentData();
-            if (currentData != null) {
-                System.out.println("节点数据：" + new String(currentData.getData()));
-            } else {
-                System.out.println("节点不存在。。");
-            }
-        };
-        //加入监听
-        nodeCache.getListenable().addListener(nodeCacheListener);
-        //开始监听
-        nodeCache.start();
-
-//        String s1 = curatorFramework.create().creatingParentContainersIfNeeded().withMode(CreateMode.PERSISTENT).forPath(nodeCacheStr, "1".getBytes());
-//        System.out.println("创建节点" + s1);
-
-        byte[] bytes = curatorFramework.getData().forPath(nodeCacheStr);
-        System.out.println("节点值：" + new String(bytes));
-
-        Stat stat = curatorFramework.setData().forPath(nodeCacheStr, "112".getBytes());
-        System.out.println("节点状态：" + stat);
-
-//        Void aVoid = curatorFramework.delete().deletingChildrenIfNeeded().forPath(nodeCacheStr);
-//        System.out.println("删除节点");
-
-        //阻塞。等待输入
-        System.in.read();
-    }
-
-
-    /**
-     * Tree Cache
-     * Tree Cache可以监控整个树上的所有节点，类似于PathCache和NodeCache的组合，主要涉及到下面四个类：
-     * <p>
-     * TreeCache - Tree Cache实现类
-     * TreeCacheListener - 监听器类
-     * TreeCacheEvent - 触发的事件类
-     * ChildData - 节点数据
-     */
-
-    @Test
-    public void TreeCache() throws Exception {
-        String treeCacheStr = "/cache/treeCache";
-
-        curatorFramework.delete().deletingChildrenIfNeeded().forPath(treeCacheStr);
-        System.out.println("删除节点");
-        //创建treeCache
-        TreeCache treeCache = new TreeCache(curatorFramework, treeCacheStr);
-
-        TreeCacheListener treeCacheListener = (client, event) -> {
-            System.out.println("事件类型：" + event.getType());
-            if (event.getData() != null) {
-                System.out.println("节点路径：" + event.getData().getPath() + "----节点数据：" + new String(event.getData().getData()));
-            }
-        };
-        //加入监听
-        treeCache.getListenable().addListener(treeCacheListener);
-        //开始监听
-        treeCache.start();
-        String s1 = curatorFramework.create().creatingParentContainersIfNeeded().withMode(CreateMode.PERSISTENT).forPath(treeCacheStr + "/a", "1".getBytes());
-        System.out.println("创建节点" + s1);
-        String s2 = curatorFramework.create().creatingParentContainersIfNeeded().withMode(CreateMode.PERSISTENT).forPath(treeCacheStr + "/a/b", "1".getBytes());
-        System.out.println("创建节点" + s2);
-
-        Stat stat = curatorFramework.setData().forPath(treeCacheStr + "/a/b", "112".getBytes());
-        System.out.println("节点状态：" + stat);
-        //阻塞。等待输入
-        System.in.read();
-    }
-
-    /**
-     * Leader选举
-     * <p>
-     * 在分布式计算中， leader elections是很重要的一个功能， 这个选举过程是这样子的： 指派一个进程作为组织者，将任务分发给各节点。
-     * 在任务开始前， 哪个节点都不知道谁是leader(领导者)或者coordinator(协调者). 当选举算法开始执行后， 每个节点最终会得到一个唯一的节点作为任务leader.
-     * 除此之外， 选举还经常会发生在leader意外宕机的情况下，新的leader要被选举出来。
-     * <p>
-     * 在zookeeper集群中，leader负责写操作，然后通过Zab协议实现follower的同步，leader或者follower都可以处理读操作。
-     * <p>
-     * Curator 有两种leader选举的recipe,分别是LeaderSelector和LeaderLatch。
-     * <p>
-     * LeaderSelector是所有存活的客户端不间断的轮流做Leader，大同社会。
-     * LeaderLatch是一旦选举出Leader，除非有客户端挂掉重新触发选举，否则不会交出领导权。
-     * <p>
-     * <p>
-     * 首先我们创建了10个LeaderLatch，启动后它们中的一个会被选举为leader。 因为选举会花费一些时间，start后并不能马上就得到leader。
-     * 通过hasLeadership查看自己是否是leader， 如果是的话返回true。
-     * 可以通过.getLeader().getId()可以得到当前的leader的ID。
-     * 只能通过close释放当前的领导权。
-     * await是一个阻塞方法， 尝试获取leader地位，但是未必能上位。
-     */
-
-    @Test
-    public void LeaderLatch() {
-        String LeaderLatchStr = "/leader/leaderLatch";
-
-        //客户端集合
-        List<CuratorFramework> clients = Lists.newArrayList();
-        //leaderlatche集合
-        List<org.apache.curator.framework.recipes.leader.LeaderLatch> leaderLatches = Lists.newArrayList();
-        try {
-            for (int i = 0; i < 10; i++) {
-                //创建客户端放入集合
-                RetryPolicy retry = new ExponentialBackoffRetry(1000, 3);
-                CuratorFramework client = CuratorFrameworkFactory.newClient(zookeeperAddress, 5000, 3000, retry);
-                clients.add(client);
-
-                //创建leaderlatch
-                org.apache.curator.framework.recipes.leader.LeaderLatch latch = new LeaderLatch(client, LeaderLatchStr, "Client #" + i);
-                //开始进行leader选取
-                latch.addListener(new LeaderLatchListener() {
-                    @Override
-                    public void isLeader() {
-                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy年mm月dd日hh时MM分ss秒");
-                        System.out.println(dateFormat.format(new Date()) + "---我是Leader");
-                    }
-
-                    @Override
-                    public void notLeader() {
-                        System.out.println("我不是Leader。。。。。");
-                    }
-                });
-                leaderLatches.add(latch);
-                //启动客户端
-                client.start();
-                //启动latch
-                latch.start();
-            }
-            System.out.println("线程休息10秒");
-            Thread.sleep(10000);
-
-            //现在的leader
-            LeaderLatch leaderLatch = null;
-            //寻找leader
-            for (org.apache.curator.framework.recipes.leader.LeaderLatch latch : leaderLatches) {
-                if (latch.hasLeadership()) {  ///返回true说明当前实例是leader
-                    leaderLatch = latch;
-                    System.out.println("找到了leader..,leader的id是" + latch.getId());
-                    break;
-                }
-            }
-            System.out.println("现在的leder是：" + leaderLatch.getId());
-            System.out.println("释放的leder是：" + leaderLatch.getId());
-            leaderLatch.close();
-            System.out.println("线程休息10秒");
-            Thread.sleep(10000);
-            //选举leader
-            for (org.apache.curator.framework.recipes.leader.LeaderLatch latch : leaderLatches) {
-                if (latch.hasLeadership()) {  ///返回true说明当前实例是leader
-                    leaderLatch = latch;
-                    System.out.println("找到了leader..,leader的id是" + latch.getId());
-                    break;
-                }
-            }
-            System.out.println("现在的leder是：" + leaderLatch.getId());
-            System.out.println("释放的leder是：" + leaderLatch.getId());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        } finally {
-            for (org.apache.curator.framework.recipes.leader.LeaderLatch leaderLatch : leaderLatches) {
-                if (leaderLatch.getState() != null) {
-                    CloseableUtils.closeQuietly(leaderLatch);
-                }
-            }
-            for (CuratorFramework client : clients) {
-                CloseableUtils.closeQuietly(client);
-            }
-        }
-    }
-
-    /**
-     * LeaderSelector
-     * LeaderSelector使用的时候主要涉及下面几个类：
-     * <p>
-     * LeaderSelector
-     * LeaderSelectorListener
-     * LeaderSelectorListenerAdapter
-     * CancelLeadershipException
-     */
-
-    @Test
-    public void LeaderSelector() {
-
-        String leaderSelectorStr = "/leader/leaderSelector";
-        //客户端集合
-        List<CuratorFramework> clients = Lists.newArrayList();
-        //leaderlatche集合
-        List<LeaderSelector> leaderSelectorList = Lists.newArrayList();
-        try {
-            for (int i = 0; i < 10; i++) {
-                //创建客户端放入集合
-                RetryPolicy retry = new ExponentialBackoffRetry(1000, 3);
-                CuratorFramework client = CuratorFrameworkFactory.newClient(zookeeperAddress, 5000, 3000, retry);
-                clients.add(client);
-
-                //创建LeaderSelector
-                LeaderSelector leaderSelector = new LeaderSelector(client, leaderSelectorStr, new LeaderSelectorListener() {
-                    @Override
-                    public void takeLeadership(CuratorFramework curatorFramework) throws Exception {
-                        byte[] bytes = curatorFramework.getData().forPath(leaderSelectorStr);
-                        System.out.println("takeLeadership----" + new String(bytes));
-                    }
-
-                    @Override
-                    public void stateChanged(CuratorFramework curatorFramework, ConnectionState connectionState) {
-                        try {
-                            byte[] bytes = new byte[0];
-                            bytes = curatorFramework.getData().forPath(leaderSelectorStr);
-                            System.out.println("takeLeadership----" + new String(bytes));
-                            System.out.println("connectionState----" + connectionState.name());
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                });
-//                leaderSelector.autoRequeue();
-                leaderSelector.setId("leaderSelector_#" + i);
-                leaderSelectorList.add(leaderSelector);
-                //启动客户端
-                client.start();
-                //启动latch
-                leaderSelector.start();
-            }
-
-            for (LeaderSelector exampleClient : leaderSelectorList) {
-                String id = exampleClient.getId();
-                System.out.println("遍历leaderSelector:" + id);
-            }
-            //等待输入
-            System.in.read();
-        } catch (Exception e) {
-
-        } finally {
-            System.out.println("关闭...");
-            for (LeaderSelector exampleClient : leaderSelectorList) {
-                CloseableUtils.closeQuietly(exampleClient);
-            }
-            for (CuratorFramework client : clients) {
-                CloseableUtils.closeQuietly(client);
-            }
-        }
-
-    }
-
 
     /**
      * 共享锁操作
