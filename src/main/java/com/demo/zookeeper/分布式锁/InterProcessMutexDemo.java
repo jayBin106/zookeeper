@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static com.demo.zookeeper.ZookeeperDemo.zookeeperAddress;
+import static com.demo.zookeeper.zookeeper基本操作.ZookeeperDemo.zookeeperAddress;
 
 /**
  * 创建一个InterProcessMutexDemo类， 它负责请求锁， 使用资源，释放锁这样一个完整的访问过程。

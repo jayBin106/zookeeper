@@ -1,4 +1,4 @@
-package com.demo.zookeeper;
+package com.demo.zookeeper.zookeeper基本操作;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;

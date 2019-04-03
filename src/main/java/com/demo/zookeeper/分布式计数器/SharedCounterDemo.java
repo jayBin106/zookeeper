@@ -13,12 +13,11 @@ import org.apache.curator.retry.ExponentialBackoffRetry;
 import java.io.IOException;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static com.demo.zookeeper.ZookeeperDemo.zookeeperAddress;
+import static com.demo.zookeeper.zookeeper基本操作.ZookeeperDemo.zookeeperAddress;
 
 /**
  * 分布式int计数器—SharedCount

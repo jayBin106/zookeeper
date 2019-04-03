@@ -1,4 +1,4 @@
-package com.demo.zookeeper;
+package com.demo.zookeeper.zookeeper基本操作;
 
 import com.google.common.collect.Lists;
 import org.apache.curator.RetryPolicy;

@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.framework.imps.CuratorFrameworkState;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.curator.framework.recipes.leader.LeaderLatchListener;
 import org.apache.curator.framework.recipes.leader.LeaderSelector;
@@ -20,7 +19,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-import static com.demo.zookeeper.ZookeeperDemo.zookeeperAddress;
+import static com.demo.zookeeper.zookeeper基本操作.ZookeeperDemo.zookeeperAddress;
 
 /**
  * Leader

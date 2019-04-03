@@ -13,7 +13,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static com.demo.zookeeper.ZookeeperDemo.zookeeperAddress;
+import static com.demo.zookeeper.zookeeper基本操作.ZookeeperDemo.zookeeperAddress;
 
 /**
  * lock

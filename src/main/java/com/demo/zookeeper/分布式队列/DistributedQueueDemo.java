@@ -6,7 +6,7 @@ import org.apache.curator.framework.recipes.queue.*;
 import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 
-import static com.demo.zookeeper.ZookeeperDemo.zookeeperAddress;
+import static com.demo.zookeeper.zookeeper基本操作.ZookeeperDemo.zookeeperAddress;
 
 /**
  * * 分布式队列

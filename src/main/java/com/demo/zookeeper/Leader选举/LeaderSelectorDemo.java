@@ -1,6 +1,6 @@
 package com.demo.zookeeper.Leader选举;
 
-import com.demo.zookeeper.ZookeeperDemo;
+import com.demo.zookeeper.zookeeper基本操作.ZookeeperDemo;
 import com.google.common.collect.Lists;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
