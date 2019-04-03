@@ -1,18 +1,21 @@
 package com.demo.zookeeper.统一配置管理;
 
+import com.demo.zookeeper.ACL权限.AclUtils;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.curator.framework.AuthInfo;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.cache.*;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.logging.log4j.LogManager;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Id;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -55,8 +58,12 @@ public class PropertyUtils {
         if (StringUtils.isEmpty(zookeeperAddress) || StringUtils.isEmpty(sessionTimeout)) {
             throw new RuntimeException("配置项[zookeeper.address,zookeeper.sessionTimeout]不能为空");
         }
-        curator = CuratorFrameworkFactory.builder().connectString(zookeeperAddress).sessionTimeoutMs(Integer.valueOf(sessionTimeout))
-                .retryPolicy(new ExponentialBackoffRetry(1000, 3)).build();
+        curator = CuratorFrameworkFactory
+                .builder()
+                .connectString(zookeeperAddress)
+                .sessionTimeoutMs(Integer.valueOf(sessionTimeout))
+                .retryPolicy(new ExponentialBackoffRetry(1000, 3))
+                .build();
         curator.start();
     }
 
