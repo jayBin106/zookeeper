@@ -30,6 +30,17 @@ import static com.demo.zookeeper.zookeeper基本操作.ZookeeperDemo.zookeeperAd
 public class Leader {
     /**
      * Leader选举
+     * 在实际生产中，特别是分布式系统中，我们经常遇到这样的场景：一个复杂的任务，近需要从分布式机器中选出一台机器来执行。
+     * 诸如此类的问题，我们统称为“Master选举”。比如，在分布式系统中很常见的一个问题就是定时任务的执行。如果多台机器同时
+     * 执行相同的定时任务，业务复杂则可能出现灾难性的后果。本篇博客就以定时任务为例来示例说明Curator的Master选举用法。
+     * <p>
+     * 原理
+     * 利用zookeeper来实现Master选举的基本思路如下：
+     * 选择一个根节点（与其他业务隔离），比如/jobMaster，多台机器同时在此节点下面创建一个子节点/jobMaster/lock，zookeeper保证了最终
+     * 只有一台机器能够创建成功，那么这台机器将成为Master。由它来执行业务操作。
+     * <p>
+     * Curator所做的事情就是将上面的思路进行了封装，把原生API的节点创建、事件监听和自动选举进行整合封装，提供了一套简单易用的解决方案。
+     * <p>
      * <p>
      * 在分布式计算中， leader elections是很重要的一个功能， 这个选举过程是这样子的： 指派一个进程作为组织者，将任务分发给各节点。
      * 在任务开始前， 哪个节点都不知道谁是leader(领导者)或者coordinator(协调者). 当选举算法开始执行后， 每个节点最终会得到一个唯一的节点作为任务leader.
@@ -90,32 +101,25 @@ public class Leader {
             System.out.println("线程休息,随机秒");
             Thread.sleep(random.nextInt(10000));
 
-            //现在的leader
-            LeaderLatch leaderLatch = null;
-            //寻找leader
-            for (org.apache.curator.framework.recipes.leader.LeaderLatch latch : leaderLatches) {
-                if (latch.hasLeadership()) {  ///返回true说明当前实例是leader
-                    leaderLatch = latch;
-                    System.out.println("找到了leader..,leader的id是" + latch.getId());
-                    break;
+            while (true) {
+                //现在的leader
+                LeaderLatch leaderLatch = null;
+                //寻找leader
+                for (org.apache.curator.framework.recipes.leader.LeaderLatch latch : leaderLatches) {
+                    if (latch.hasLeadership()) {  ///返回true说明当前实例是leader
+                        leaderLatch = latch;
+                        System.out.println("找到了leader..,leader的id是" + latch.getId());
+                        break;
+                    }
                 }
-            }
-            System.out.println("现在的leder是：" + leaderLatch.getId());
-            System.out.println("释放的leder是：" + leaderLatch.getId());
-            leaderLatch.close();
+                System.out.println("现在的leder是：" + leaderLatch.getId());
+                System.out.println("释放的leder是：" + leaderLatch.getId());
+                leaderLatch.close();  //放弃领导权
 
-            System.out.println("线程休息,随机秒");
-            Thread.sleep(random.nextInt(10000));
-            //选举leader
-            for (org.apache.curator.framework.recipes.leader.LeaderLatch latch : leaderLatches) {
-                if (latch.hasLeadership()) {  ///返回true说明当前实例是leader
-                    leaderLatch = latch;
-                    System.out.println("找到了leader..,leader的id是" + latch.getId());
-                    break;
-                }
+                System.out.println("线程休息,随机秒");
+                Thread.sleep(random.nextInt(10000));
             }
-            System.out.println("现在的leder是：" + leaderLatch.getId());
-            System.out.println("释放的leder是：" + leaderLatch.getId());
+
         } catch (Exception ex) {
             ex.printStackTrace();
         } finally {

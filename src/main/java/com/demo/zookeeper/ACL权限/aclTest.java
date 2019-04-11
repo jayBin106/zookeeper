@@ -11,12 +11,8 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.junit.Test;
-import org.springframework.util.Base64Utils;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 
 import static com.demo.zookeeper.zookeeper基本操作.ZookeeperDemo.zookeeperAddress;
@@ -31,7 +27,7 @@ public class aclTest {
     static CuratorFramework curator = null;
     static CuratorFramework curatorT = null;
 
-    //初始化客户端
+    //通过 ACL 创建客户端
     public aclTest() {
         AuthInfo authInfo = new AuthInfo("digest", "imooc1:123456".getBytes());
         List<AuthInfo> authInfos = Lists.newArrayList();

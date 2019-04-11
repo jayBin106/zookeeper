@@ -67,6 +67,7 @@ public class ConsumerClient {
                 Thread.sleep(10 * 1000);
             }
             Object[] objects = services.toArray();
+            //负载均衡规则，随机获取
             Random random = new Random();
             int nextInt = random.nextInt(objects.length);
             ServiceInstance serviceInstance = (ServiceInstance) objects[nextInt];

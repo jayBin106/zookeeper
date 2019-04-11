@@ -83,19 +83,19 @@ public class DistributedQueueDemo {
         DistributedPriorityQueue<String> priorityQueue = queueBuilder.buildPriorityQueue(0);
         priorityQueue.start();
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 20; i++) {
 //            queueA.put("test-A-" + i);
 //            Thread.sleep(1000);
 //            queueB.put("test-B-" + i);
 //            Thread.sleep(1000);
-//            queueC.put("test-C-" + i, "id-" + i);
+            queueC.put("test-C-" + i, "id-" + i);
 //            Thread.sleep(1000);
 //            if (i / 2 == 0) {
 //                queueC.remove("id-" + i);
 //            }
             Thread.sleep(1000);
             //放入队列时需要指定优先级：
-            priorityQueue.put("priorityQueue-" + i, i * 2);
+//            priorityQueue.put("priorityQueue-" + i, i * 2);
         }
         Thread.sleep(1000 * 10);// 等待消息消费完成
         queueB.close();
